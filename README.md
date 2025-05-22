@@ -81,11 +81,14 @@ reddit_analysis/
 - Visualizations and statistics will be generated dynamically.
 
 ## Screenshots
-
-_Add screenshots of your app here._
-
+![Screenshot 2025-04-23 094621](https://github.com/user-attachments/assets/d1bdaa6c-cf2f-47e1-9159-a98b6f020756)
+![Screenshot 2025-04-08 113831](https://github.com/user-attachments/assets/5217b7e5-2e5d-4f95-864b-aebfc4d0d139)
+![Screenshot 2025-04-07 193351](https://github.com/user-attachments/assets/34897906-1dba-4fe0-82b7-3d19d7737d71)
+![Screenshot 2025-04-05 101114](https://github.com/user-attachments/assets/33466582-6df3-4a4f-a012-8e1669680758)
+![Screenshot 2025-04-21 162135](https://github.com/user-attachments/assets/fa64527c-3aff-4192-92fe-242166dafe47)
 
 
 ---
+
 
 **Note:** This project is for educational and research purposes. Use responsibly and respect Reddit's API terms of service.
