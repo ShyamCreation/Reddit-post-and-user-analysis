@@ -1,0 +1,105 @@
+{% extends 'reddit_app/base.html' %}
+
+{% block title %}Reddit Word Cloud{% endblock %}
+
+{% block content %}
+<h2>Reddit Word Cloud Generator</h2>
+
+<form method="get" class="mb-4">
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Generate Word Cloud</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label for="username" class="form-label">Reddit Username:</label>
+                    <div class="input-group">
+                        <span class="input-group-text">u/</span>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ username }}" placeholder="Enter Reddit username">
+                    </div>
+                    <small class="text-muted">OR</small>
+                </div>
+                <div class="col-md-5">
+                    <label for="subreddit" class="form-label">Subreddit:</label>
+                    <div class="input-group">
+                        <span class="input-group-text">r/</span>
+                        <input type="text" class="form-control" id="subreddit" name="subreddit" value="{{ subreddit }}" placeholder="Enter subreddit name">
+                    </div>
+                </div>
+                <div class="col-md-10">
+                    <label for="excluded_words" class="form-label">Excluded Words (comma-separated):</label>
+                    <input type="text" class="form-control" id="excluded_words" name="excluded_words" value="{{ excluded_words }}" placeholder="e.g., deleted,removed,edit">
+                    <small class="text-muted">Common words like "the", "and", "a" are automatically excluded</small>
+                </div>
+                <div class="col-md-2 mt-4">
+                    <button type="submit" class="btn btn-primary w-100">Generate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if error_message %}
+<div class="alert alert-danger">{{ error_message }}</div>
+{% endif %}
+
+{% if word_cloud or word_frequency %}
+<div class="row">
+    {% if word_cloud %}
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    {% if username %}Word Cloud for u/{{ username }}{% endif %}
+                    {% if subreddit %}Word Cloud for r/{{ subreddit }}{% endif %}
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="data:image/png;base64,{{ word_cloud }}" class="img-fluid" alt="Word Cloud">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if word_frequency %}
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    {% if username %}Most Frequent Words for u/{{ username }}{% endif %}
+                    {% if subreddit %}Most Frequent Words for r/{{ subreddit }}{% endif %}
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="data:image/png;base64,{{ word_frequency }}" class="img-fluid" alt="Word Frequency Chart">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% elif username or subreddit %}
+<div class="alert alert-warning">
+    {% if username %}No data found for username: {{ username }}{% endif %}
+    {% if subreddit %}No data found for subreddit: r/{{ subreddit }}{% endif %}
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">How to use the Word Cloud Generator</h5>
+        <p class="card-text">
+            This tool creates a visual representation of the most common words used by a Reddit user or in a subreddit.
+        </p>
+        <ul>
+            <li>Enter either a Reddit username or a subreddit name (not both)</li>
+            <li>Optionally add words you want to exclude from the visualisation</li>
+            <li>Click "Generate" to create the word cloud</li>
+        </ul>
+        <p class="card-text">
+            The size of each word in the cloud represents how frequently it appears in the content.
+        </p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+```

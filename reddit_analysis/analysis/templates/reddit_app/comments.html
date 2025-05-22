@@ -1,0 +1,51 @@
+{% extends 'reddit_app/base.html' %}
+
+{% block title %}Reddit Comments{% endblock %}
+
+{% block content %}
+<h2>Subreddit Comments</h2>
+
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text">r/</span>
+                <input type="text" class="form-control" name="subreddit" value="{{ subreddit }}" placeholder="Enter subreddit name" required>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <input type="number" class="form-control" name="limit" value="{{ limit|default:100 }}" placeholder="Limit">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Fetch Comments</button>
+        </div>
+    </div>
+</form>
+
+{% if subreddit %}
+    <div class="row">
+        {% for comment in comments %}
+        <div class="col-md-6">
+            <div class="card comment-card">
+                <div class="card-header d-flex justify-content-between">
+                    <span>Score: {{ comment.score }}</span>
+                    <small>{{ comment.created_utc|date:"Y-m-d H:i" }}</small>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ comment.body }}</p>
+                    <a href="{{ comment.permalink }}" target="_blank" class="btn btn-sm btn-outline-secondary">View on Reddit</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">No comments found for r/{{ subreddit }}</div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">
+        Enter a subreddit name to view comments.
+    </div>
+{% endif %}
+{% endblock %}

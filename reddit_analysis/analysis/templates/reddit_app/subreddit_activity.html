@@ -1,0 +1,33 @@
+{% extends 'reddit_app/base.html' %}
+
+{% block title %}Subreddit Activity{% endblock %}
+
+{% block content %}
+<h2>Subreddit Participation Analysis</h2>
+
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-9">
+            <input type="text" class="form-control" name="username" value="{{ username }}" 
+                   placeholder="Enter Reddit username" required>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Analyze</button>
+        </div>
+    </div>
+</form>
+
+{% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+{% endif %}
+
+{% if image_base64 %}
+    <div class="card mt-4">
+        <div class="card-header">Subreddit Participation</div>
+        <div class="card-body text-center">
+            <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Subreddit Pie Chart">
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

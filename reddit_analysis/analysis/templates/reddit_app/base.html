@@ -1,0 +1,341 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Reddit Data Viewer{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --reddit-orange: #FF4500;
+            --reddit-blue:rgb(3, 15, 25);
+            --light-gray: #f8f9fa;
+        }
+        
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--light-gray);
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--reddit-orange) !important;
+        }
+        
+        .nav-link {
+            transition: color 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: var(--reddit-orange) !important;
+        }
+        
+        .nav-link.active {
+            color: var(--reddit-orange) !important;
+            border-bottom: 2px solid var(--reddit-orange);
+        }
+        
+        .btn-primary {
+            background-color: var(--reddit-blue);
+            border-color: var(--reddit-blue);
+        }
+        
+        .btn-primary:hover {
+            background-color: #005fa3;
+            border-color: #005fa3;
+        }
+        
+        .card {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            border: none;
+            border-radius: 10px;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            color: var(--reddit-blue);
+            font-weight: bold;
+        }
+        
+        .comment-card {
+            margin-bottom: 15px;
+            border-left: 3px solid var(--reddit-orange);
+        }
+        
+        .page-header {
+            color: var(--reddit-blue);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        /* Loading spinner */
+        .spinner-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .footer {
+            margin-top: auto;
+            padding: 1.5rem 0;
+            background-color: #343a40;
+            color: white;
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Dark mode toggle */
+        #dark-mode-toggle {
+            cursor: pointer;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="fab fa-reddit mr-2"></i> Reddit Data Viewer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/user-analysis/' %}active{% endif %}" href="{% url 'user_analysis' %}">
+                            <i class="fas fa-user-chart"></i> User Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/comments/' %}active{% endif %}" href="{% url 'comments' %}">
+                            <i class="fas fa-comments"></i> Subreddit Comments
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/karma/' %}active{% endif %}" href="{% url 'karma_chart' %}">
+                            <i class="fas fa-chart-bar"></i> Karma Chart
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/word-cloud/' %}active{% endif %}" href="{% url 'word_cloud' %}">
+                            <i class="fas fa-cloud"></i> Word Cloud
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/comment-length/' %}active{% endif %}" href="{% url 'comment_length' %}">
+                            <i class="fas fa-text-height"></i> Post Comment Length
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-tools"></i> More Tools
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            {% comment %} <li><a class="dropdown-item" href="{% url 'post_analysis' %}">Post Analysis</a></li> {% endcomment %}
+                            <li><a class="dropdown-item" href="{% url 'subreddit_activity' %}">Subreddit Activity</a></li>
+                            <li><a class="dropdown-item" href="{% url 'post_wordcloud_sentiment' %}">Post Word Cloud & Sentiment</a></li>
+                            <li><a class="dropdown-item" href="{% url 'interactive_comment_trends' %}"> Interactive Comment Trends</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Dashboard</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <div class="form-check form-switch me-3">
+                        <input class="form-check-input" type="checkbox" id="dark-mode-toggle">
+                        <label class="form-check-label text-light" for="dark-mode-toggle">
+                            <i class="fas fa-moon"></i>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading Spinner -->
+    <div class="spinner-overlay" id="loading-spinner">
+        <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-4 mb-5 fade-in">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}
+        <div class="text-center my-5">
+            <img src="{% static 'reddit_app/reddit.png' %}" alt="Reddit Logo" class="mb-4" width="100">
+            <h1 class="display-4">Welcome to Reddit Data Viewer</h1>
+            <p class="lead">Analyze Reddit users, communities, and content with powerful visualisation tools</p>
+            <hr class="my-4">
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-user-circle fa-3x mb-3 text-primary"></i>
+                        <h5 class="card-title">User Analysis</h5>
+                        <p class="card-text">Get comprehensive insights about any Reddit user including karma, post history, and activity patterns.</p>
+                        <a href="{% url 'user_analysis' %}" class="btn btn-primary">Analyze User</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-comments fa-3x mb-3 text-primary"></i>
+                        <h5 class="card-title">Subreddit Comments</h5>
+                        <p class="card-text">View the latest comments from any subreddit of your choice with detailed analytics.</p>
+                        <a href="{% url 'comments' %}" class="btn btn-primary">View Comments</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-chart-pie fa-3x mb-3 text-primary"></i>
+                        <h5 class="card-title">Post Analysis</h5>
+                        <p class="card-text">Deep dive into any Reddit post with comprehensive comment and engagement analytics.</p>
+                        <a href="{% url 'comment_length' %}" class="btn btn-primary">Analyze Post</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-cloud fa-3x mb-3 text-primary"></i>
+                        <h5 class="card-title">Word Cloud Generator</h5>
+                        <p class="card-text">Generate visual word clouds from subreddits or user content to identify common themes.</p>
+                        <a href="{% url 'word_cloud' %}" class="btn btn-primary">Create Word Cloud</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 text-center">
+                    <div class="card-body">
+                        <i class="fas fa-chart-bar fa-3x mb-3 text-primary"></i>
+                        <h5 class="card-title">Karma Analytics</h5>
+                        <p class="card-text">Visualise karma distribution and growth patterns for any Reddit user over time.</p>
+                        <a href="{% url 'karma_chart' %}" class="btn btn-primary">View Karma Charts</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Reddit Data Viewer</h5>
+                    <p>A tool for analyzing and visualizing Reddit data.</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'index' %}" class="text-white">Home</a></li>
+                        <li><a href="{% url 'user_analysis' %}" class="text-white">User Analysis</a></li>
+                        <li><a href="{% url 'comments' %}" class="text-white">Comments</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://www.reddit.com/dev/api/" class="text-white" target="_blank">Reddit API</a></li>
+                        <li><a href="https://praw.readthedocs.io/" class="text-white" target="_blank">PRAW Documentation</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-light">
+            <div class="text-center">
+                <p>&copy; 2025 Reddit Data Viewer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show loading spinner for form submissions
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('form');
+            const spinner = document.getElementById('loading-spinner');
+            
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    spinner.style.display = 'flex';
+                });
+            });
+            
+            // Dark mode toggle
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const body = document.body;
+            
+            // Check for saved preference
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                body.classList.add('bg-dark', 'text-light');
+                darkModeToggle.checked = true;
+            }
+            
+            darkModeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    body.classList.add('bg-dark', 'text-light');
+                    localStorage.setItem('darkMode', 'enabled');
+                } else {
+                    body.classList.remove('bg-dark', 'text-light');
+                    localStorage.setItem('darkMode', 'disabled');
+                }
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,51 @@
+{% extends 'reddit_app/base.html' %}
+
+{% block title %}Post Comment Analysis{% endblock %}
+
+{% block content %}
+<h2>Reddit Post Comment Analysis</h2>
+
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-9">
+            <input type="text" class="form-control" name="post_url" value="{{ post_url }}" 
+                   placeholder="Enter Reddit post URL" required>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Analyze Post</button>
+        </div>
+    </div>
+</form>
+
+{% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+{% endif %}
+
+{% if stats %}
+    <div class="card">
+        <div class="card-body">
+            <h4>Statistics for Post Comments</h4>
+            <p><strong>Total Comments:</strong> {{ stats.total_comments }}</p>
+            <h5>Word Count</h5>
+            <p><strong>Average:</strong> {{ stats.avg_word_count|floatformat:2 }}</p>
+            <p><strong>Median:</strong> {{ stats.median_word_count }}</p>
+            <p><strong>Quartiles5:</strong></p>
+            <ul>
+                <li>25%: {{ stats.quartiles_word_count.0.25 }}</li>
+                <li>50% (Median): {{ stats.quartiles_word_count.0.50 }}</li>
+                <li>75%: {{ stats.quartiles_word_count.0.75 }}</li>
+            </ul>
+        </div>
+    </div>
+
+    {% if image_base64 %}
+    <div class="card mt-4">
+        <div class="card-header">Histogram of Comment Lengths</div>
+        <div class="card-body text-center">
+            <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Comment Length Histogram">
+        </div>
+    </div>
+    {% endif %}
+{% endif %}
+
+{% endblock %}

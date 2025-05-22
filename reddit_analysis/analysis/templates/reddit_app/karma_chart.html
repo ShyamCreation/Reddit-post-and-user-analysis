@@ -1,0 +1,38 @@
+{% extends 'reddit_app/base.html' %}
+
+{% block title %}Reddit Karma Chart{% endblock %}
+
+{% block content %}
+<h2>Reddit Karma Chart</h2>
+
+<form method="get" class="mb-4">
+    <div class="row g-3">
+        <div class="col-md-9">
+            <div class="input-group">
+                <span class="input-group-text">u/</span>
+                <input type="text" class="form-control" name="username" value="{{ username }}" placeholder="Enter Reddit username" required>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Generate Chart</button>
+        </div>
+    </div>
+</form>
+
+{% if error_message %}
+<div class="alert alert-danger">{{ error_message }}</div>
+{% endif %}
+
+{% if image_base64 %}
+<div class="card">
+    <div class="card-header">
+        Karma for u/{{ username }}
+    </div>
+    <div class="card-body text-center">
+        <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid" alt="Karma Chart">
+    </div>
+</div>
+{% elif username and not error_message %}
+<div class="alert alert-warning">No data found for username: {{ username }}</div>
+{% endif %}
+{% endblock %}

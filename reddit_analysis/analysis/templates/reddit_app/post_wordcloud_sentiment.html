@@ -1,0 +1,119 @@
+{% extends 'reddit_app/base.html' %}
+{% block title %}Post Word Cloud & Sentiment Analysis{% endblock %}
+
+{% block content %}
+<h2><i class="fas fa-chart-cloud"></i> Word Cloud & Sentiment Analysis</h2>
+
+<!-- Form to input Reddit post URL -->
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input type="url" name="post_url" class="form-control" placeholder="Enter Reddit post URL" required>
+        <button type="submit" class="btn btn-primary">Analyze</button>
+    </div>
+</form>
+
+{% if post_url %}
+    <p>Analyzing post: <a href="{{ post_url }}" target="_blank">{{ post_url }}</a></p>
+{% endif %}
+
+{% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+{% endif %}
+
+{% if wordcloud_img %}
+    <div class="card mt-4">
+        <div class="card-header">Word Cloud</div>
+        <div class="card-body text-center">
+            <img src="data:image/png;base64,{{ wordcloud_img }}" class="img-fluid" alt="Word Cloud">
+        </div>
+    </div>
+{% endif %}
+
+{% if sentiment_summary %}
+    <div class="card mt-4">
+        <div class="card-header">Sentiment Analysis Summary</div>
+        <div class="card-body">
+            <p><strong>Positive:</strong> {{ sentiment_summary.Positive }}%</p>
+            <p><strong>Neutral:</strong> {{ sentiment_summary.Neutral }}%</p>
+            <p><strong>Negative:</strong> {{ sentiment_summary.Negative }}%</p>
+        </div>
+    </div>
+{% endif %}
+
+{% if analyzed_comments %}
+    <div class="card mt-4">
+        <div class="card-header">Newest Comments with Sentiment Analysis</div>
+        <div class="card-body">
+            <div id="comment-list">
+                {% for comment in analyzed_comments|slice:":20" %}
+                    <div class="comment-item mb-3 p-3 border rounded">
+                        <p><strong>User:</strong> {{ comment.username }}</p>
+                        <p><strong>Time:</strong> {{ comment.timestamp }}</p>
+                        <p><strong>Comment:</strong> {{ comment.text }}</p>
+                        <p>
+                            <strong>Sentiment:</strong> 
+                            <span class="{% if comment.sentiment == 'Positive' %}text-success{% elif comment.sentiment == 'Negative' %}text-danger{% else %}text-warning{% endif %}">
+                                {{ comment.sentiment }}
+                            </span>, 
+                            <strong>Score:</strong> {{ comment.score }}
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if analyzed_comments|length > 20 %}
+                <div class="text-center mt-3">
+                    <button id="load-more-btn" class="btn btn-primary">Load More</button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let allComments = {{ analyzed_comments|safe }};  
+        let commentList = document.getElementById("comment-list");
+        let loadMoreBtn = document.getElementById("load-more-btn");
+
+        // Start at 20 since 
+        let currentIndex = 20;  
+        let batchSize = 10;  // Load 10 more comments at a time
+
+        if (loadMoreBtn) {
+            loadMoreBtn.addEventListener("click", function() {
+                let nextBatch = allComments.slice(currentIndex, currentIndex + batchSize);
+                currentIndex += batchSize;
+
+                for (let comment of nextBatch) {
+                    let sentimentClass = 'text-warning';
+                    if (comment.sentiment === 'Positive') sentimentClass = 'text-success';
+                    else if (comment.sentiment === 'Negative') sentimentClass = 'text-danger';
+                    
+                    let commentItem = document.createElement("div");
+                    commentItem.classList.add("comment-item", "mb-3", "p-3", "border", "rounded");
+                    commentItem.innerHTML = `
+                        <p><strong>User:</strong> ${comment.username}</p>
+                        <p><strong>Time:</strong> ${comment.timestamp}</p>
+                        <p><strong>Comment:</strong> ${comment.text}</p>
+                        <p><strong>Sentiment:</strong> 
+                            <span class="${sentimentClass}">
+                                ${comment.sentiment}
+                            </span>, 
+                            <strong>Score:</strong> ${comment.score}
+                        </p>
+                    `;
+                    commentList.appendChild(commentItem);
+                }
+
+                // Hide button if we've reached the end of comments or max display limit
+                if (currentIndex >= allComments.length) {
+                    loadMoreBtn.style.display = "none";
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'reddit_app/base.html' %}
+{% block title %}Interactive Comment Trends{% endblock %}
+
+{% block content %}
+<h2><i class="fas fa-chart-line"></i> Interactive Comment Trends</h2>
+
+<!-- Form to input Reddit post URL -->
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input type="url" name="post_url" class="form-control" placeholder="Enter Reddit post URL" required>
+        <button type="submit" class="btn btn-primary">Analyze</button>
+    </div>
+</form>
+
+{% if post_url %}
+    <p>Analysing post: <a href="{{ post_url }}" target="_blank">{{ post_url }}</a></p>
+{% endif %}
+
+{% if error_message %}
+    <div class="alert alert-danger">{{ error_message }}</div>
+{% endif %}
+
+{% if interactive_chart %}
+    <div class="card mt-4">
+        <div class="card-header">Interactive Comment Trends</div>
+        <div class="card-body">
+            <div id="chart"></div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let chartData = {{ interactive_chart|safe }};
+        Plotly.newPlot('chart', chartData.data, chartData.layout);
+    });
+</script>
+{% endblock %}

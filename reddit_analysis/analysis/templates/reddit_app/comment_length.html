@@ -1,0 +1,307 @@
+{% extends 'reddit_app/base.html' %}
+{% block title %}Comment Length Analysis{% endblock %}
+
+{% block extra_css %}
+{% load humanize %}
+<style>
+    .stat-card {
+        transition: all 0.3s;
+    }
+    
+    .stat-card:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .key-stat {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--reddit-blue);
+    }
+    
+    .metric-title {
+        color: var(--reddit-blue);
+        font-weight: 600;
+    }
+    
+    .quartile-progress {
+        height: 10px;
+    }
+    
+    .quartile-marker {
+        position: relative;
+    }
+    
+    .quartile-marker::after {
+        content: '';
+        position: absolute;
+        bottom: -15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2px;
+        height: 10px;
+        background-color: #343a40;
+    }
+    
+    .histogram-container {
+        position: relative;
+        height: 400px;
+    }
+    
+    .interpretation {
+        background-color: #f8f9fa;
+        border-left: 4px solid var(--reddit-blue);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="page-header">
+            <i class="fas fa-text-height me-2"></i> Comment Length Analysis
+        </h2>
+        <p class="lead">Statistical analysis of Reddit comment lengths to understand user engagement patterns.</p>
+    </div>
+</div>
+
+<!-- Add form for user to input a Reddit post URL -->
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input type="url" name="post_url" class="form-control" placeholder="Enter Reddit post URL" required value="{{ post_url|default:'' }}">
+        <button type="submit" class="btn btn-primary">Analyse</button>
+    </div>
+</form>
+
+{% if error_message %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i> {{ error_message }}
+</div>
+{% elif stats %}
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-comments me-2"></i>Total Comments</h5>
+                <p class="key-stat">{{ stats.total_comments|intcomma }}</p>
+                <p class="card-text text-muted">Comments analysed in this dataset</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-font me-2"></i>Average Word Count</h5>
+                <p class="key-stat">{{ stats.avg_word_count|floatformat:1 }}</p>
+                <p class="card-text text-muted">Words per comment on average</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 stat-card">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-text-width me-2"></i>Average Character Count</h5>
+                <p class="key-stat">{{ stats.avg_char_count|floatformat:1 }}</p>
+                <p class="card-text text-muted">Characters per comment on average</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 metric-title"><i class="fas fa-ruler me-2"></i>Word Count Distribution</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th>Median</th>
+                            <td>{{ stats.median_word_count }} words</td>
+                        </tr>
+                        <tr>
+                            <th>Minimum</th>
+                            <td>{{ stats.word_count.min }} words</td>
+                        </tr>
+                        <tr>
+                            <th>Maximum</th>
+                            <td>{{ stats.word_count.max }} words</td>
+                        </tr>
+                        <tr>
+                            <th>Standard Deviation</th>
+                            <td>{{ stats.word_count.std|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h6 class="mt-4 mb-2">Quartile Distribution</h6>
+                <div class="position-relative mb-4 mt-3">
+                    <div class="progress">
+                        <div class="progress-bar bg-info quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-primary quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-info quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-light quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <div class="quartile-marker">{{ stats.word_count.min }}</div>
+                        <div class="quartile-marker">{{ stats.quartiles_word_count.0.25 }}</div>
+                        <div class="quartile-marker">{{ stats.quartiles_word_count.0.50 }}</div>
+                        <div class="quartile-marker">{{ stats.quartiles_word_count.0.75 }}</div>
+                        <div class="quartile-marker">{{ stats.word_count.max }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 metric-title"><i class="fas fa-keyboard me-2"></i>Character Count Distribution</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-hover">
+                    <tbody>
+                        <tr>
+                            <th>Median</th>
+                            <td>{{ stats.median_char_count }} characters</td>
+                        </tr>
+                        <tr>
+                            <th>Minimum</th>
+                            <td>{{ stats.char_count.min }} characters</td>
+                        </tr>
+                        <tr>
+                            <th>Maximum</th>
+                            <td>{{ stats.char_count.max }} characters</td>
+                        </tr>
+                        <tr>
+                            <th>Standard Deviation</th>
+                            <td>{{ stats.char_count.std|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <h6 class="mt-4 mb-2">Quartile Distribution</h6>
+                <div class="position-relative mb-4 mt-3">
+                    <div class="progress">
+                        <div class="progress-bar bg-success quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-primary quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-success quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-light quartile-progress" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2">
+                        <div class="quartile-marker">{{ stats.char_count.min }}</div>
+                        <div class="quartile-marker">{{ stats.quartiles_char_count.0.25 }}</div>
+                        <div class="quartile-marker">{{ stats.quartiles_char_count.0.50 }}</div>
+                        <div class="quartile-marker">{{ stats.quartiles_char_count.0.75 }}</div>
+                        <div class="quartile-marker">{{ stats.char_count.max }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if image_base64 %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 metric-title"><i class="fas fa-chart-bar me-2"></i>Comment Length Histograms</h5>
+            </div>
+            <div class="card-body text-center">
+                <img src="data:image/png;base64,{{ image_base64 }}" class="img-fluid mb-3" alt="Comment Length Histogram">
+                
+                <div class="interpretation p-3 mt-3 text-start">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Interpretation</h6>
+                    <p>The histograms above show the distribution of comment lengths across the dataset. The left histogram displays word count frequency, while the right histogram shows comment nesting depth. These visualizations can help identify common comment patterns.</p>
+                    
+                    {% if stats.avg_word_count < 20 %}
+                    <p>With an average of {{ stats.avg_word_count|floatformat:1 }} words per comment, this indicates relatively short comments which is typical for casual engagement or quick responses.</p>
+                    {% elif stats.avg_word_count < 50 %}
+                    <p>With an average of {{ stats.avg_word_count|floatformat:1 }} words per comment, this indicates moderate-length comments which suggests engaged discussions.</p>
+                    {% else %}
+                    <p>With an average of {{ stats.avg_word_count|floatformat:1 }} words per comment, this indicates longer, more in-depth comments which suggests highly engaged discussion or detailed explanations.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0 metric-title"><i class="fas fa-search-plus me-2"></i>Analyse More Data</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Looking for specific subreddit analysis?</h6>
+                        <a href="{% url 'comments' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-comments me-2"></i>View Subreddit Comments
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Want to analyse a specific post?</h6>
+                        <a href="{% url 'post_analysis' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-file-alt me-2"></i>Analyse Reddit Post
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="fas fa-info-circle me-2"></i> Histogram data is being generated. Please refresh the page in a few moments.
+</div>
+{% endif %}
+
+{% else %}
+{% if post_url %}
+<div class="alert alert-warning">
+    <i class="fas fa-exclamation-triangle me-2"></i> No comments available for analysis. The system might be retrieving data or there could be an issue with the connection to Reddit's API.
+</div>
+{% endif %}
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">What would you like to do?</h5>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            <a href="{% url 'comments' %}" class="btn btn-primary">
+                <i class="fas fa-comments me-2"></i>Browse Comments
+            </a>
+            <a href="{% url 'user_analysis' %}" class="btn btn-outline-primary">
+                <i class="fas fa-user me-2"></i>Analyse User
+            </a>
+            <a href="javascript:window.location.reload();" class="btn btn-outline-secondary">
+                <i class="fas fa-sync me-2"></i>Refresh Page
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add auto-refresh if data is still loading
+        if (document.querySelector('.alert-info')) {
+            setTimeout(function() {
+                window.location.reload();
+            }, 10000); // Refresh after 10 seconds
+        }
+        
+        // Make tables responsive
+        const tables = document.querySelectorAll('table');
+        tables.forEach(table => {
+            table.classList.add('table-responsive');
+        });
+    });
+</script>
+{% endblock %}
